@@ -1,0 +1,91 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}</style><style>:root{color-scheme:light dark;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}}:root[data-theme="dark"]{color-scheme:dark;--md-bg:#0d0d0d;--md-text:rgba(255,255,255,.85);--md-muted:rgba(255,255,255,.6);--md-fill:rgba(255,255,255,.06);--md-fill-strong:rgba(255,255,255,.09);--md-rule:rgba(255,255,255,.14);--md-rule-strong:rgba(255,255,255,.22);--md-link:hsl(210 100% 72%)}:root[data-theme="light"]{color-scheme:light}@media print{:root,:root[data-theme="dark"]{color-scheme:light;--md-bg:#fff;--md-text:rgba(0,0,0,.8);--md-muted:rgba(0,0,0,.6);--md-fill:rgba(0,0,0,.04);--md-fill-strong:rgba(0,0,0,.06);--md-rule:rgba(0,0,0,.1);--md-rule-strong:rgba(0,0,0,.16);--md-link:hsl(210 100% 45%)}}body{background:var(--md-bg);color:var(--md-text);max-width:720px;margin:0 auto;padding:32px;display:flex;flex-direction:column;gap:10px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;overflow-wrap:break-word}body>:first-child{margin-top:0}h1,h2,h3,h4,h5,h6{margin:6px 0 0;line-height:1.25;font-weight:600;text-wrap:balance}h1{font-size:1.35em}h2{font-size:1.15em;color:var(--md-muted)}h3,h4,h5,h6{font-size:1em}p,ul,ol,blockquote,table,pre,hr{margin:0}strong{font-weight:600}a{color:var(--md-link);text-decoration:none}a:hover{text-decoration:underline}ul,ol{display:flex;flex-direction:column;gap:6px;padding-left:22px}ul{list-style:disc}ol{list-style:decimal}:is(li,td,th)>*+:is(p,ul,ol,blockquote){margin-top:6px}blockquote{display:flex;flex-direction:column;gap:10px;border-left:2px solid var(--md-rule);padding-left:10px;color:var(--md-muted)}:not(pre)>code{background:var(--md-fill);padding:1px 3px;border-radius:4px;font:.92em 'SF Mono',ui-monospace,Menlo,Consolas,monospace}a>code{background:none;color:inherit}pre{background:var(--md-fill);padding:10px 12px;border-radius:6px;overflow-x:auto;font:12px/1.5 'SF Mono',ui-monospace,Menlo,Consolas,monospace;margin-block:4px}pre code{background:none;padding:0;font:inherit}table{width:100%;border-collapse:separate;border-spacing:2px;font:inherit}th,td{padding:6px 8px;border-radius:3px;text-align:left;vertical-align:top}th{background:var(--md-fill-strong);font-weight:600}td{background:var(--md-fill)}:is(th,td) :not(pre)>code{background:transparent}hr{border:0;border-top:1px solid var(--md-rule-strong);margin-block:10px}img{max-width:100%;height:auto;border-radius:4px}</style>
+</head><body>
+<h1>Guía: del HTML local a web + móvil siempre sincronizados</h1>
+<p>Dos partes: <strong>1)</strong> publicar la web actual en GitHub Pages tal cual está (con <code>localStorage</code>), y <strong>2)</strong> el camino para que web y móvil compartan los mismos datos en tiempo real vía Supabase en tu Zimaboard.</p>
+<h2>Parte 1 — Publicar en GitHub Pages</h2>
+<p><strong>Qué subir al repositorio</strong> (misma carpeta, sin subcarpetas):</p>
+<ul>
+<li><code>registro-tareas.html</code> → renómbralo a <code>index.html</code>. GitHub Pages sirve <code>index.html</code> como página de entrada del dominio; si lo dejas con el otro nombre, tu URL sería <code>.../registro-tareas.html</code> en vez de la raíz limpia.</li>
+<li><code>manifest.json</code>, <code>service-worker.js</code></li>
+<li><code>icon-192.png</code>, <code>icon-512.png</code>, <code>icon-maskable-512.png</code>, <code>apple-touch-icon.png</code></li>
+</ul>
+<p>Si renombras el HTML a <code>index.html</code>, actualiza dentro de <code>manifest.json</code> el campo <code>start_url</code> de <code>&quot;./registro-tareas.html&quot;</code> a <code>&quot;./index.html&quot;</code> (o simplemente <code>&quot;./&quot;</code>).</p>
+<p><strong>Pasos:</strong></p>
+<ol>
+<li>Crea el repositorio en GitHub (público o privado, da igual para Pages).</li>
+<li>Sube los 7 archivos a la rama principal (<code>main</code>), en la raíz del repo.</li>
+<li><code>Settings</code> → <code>Pages</code> → en <em>Source</em> elige la rama <code>main</code> y la carpeta <code>/ (root)</code> → <code>Save</code>.</li>
+<li>Espera 1–2 minutos; GitHub te da la URL: <code>https://tu-usuario.github.io/tu-repo/</code>.</li>
+<li>Abre esa URL desde el móvil → el navegador ofrecerá &quot;Añadir a pantalla de inicio&quot; (Android) o hazlo manualmente desde <em>Compartir</em> (iPhone).</li>
+</ol>
+<p>En este punto cada dispositivo sigue guardando sus tareas por separado en su propio <code>localStorage</code> — es la Parte 2 la que unifica los datos.</p>
+<h2>Parte 2 — Datos centralizados con Supabase en la Zimaboard</h2>
+<h3>2.1 Levantar Supabase autoalojado</h3>
+<ol>
+<li>En la Zimaboard, instala Docker y Docker Compose si no los tienes.</li>
+<li>Clona el repo oficial <code>supabase/supabase</code>, entra en la carpeta <code>docker</code>, copia <code>.env.example</code> a <code>.env</code> y cambia las claves/contraseñas por defecto.</li>
+<li><code>docker compose up -d</code>. Esto levanta Postgres + la API REST/Auth/Realtime de Supabase.</li>
+<li>Con Tailscale ya instalado en la Zimaboard, anota su IP de Tailscale (algo como <code>100.x.x.x</code>) o su nombre de máquina Tailscale (<code>zimaboard.tail-red.ts.net</code>).</li>
+</ol>
+<h3>2.2 Crear la tabla de tareas</h3>
+<p>En el <em>SQL Editor</em> del panel de Supabase, crea la tabla con el mismo modelo que ya usa la exportación JSON de la app:</p>
+<pre><code class="language-sql">create table tasks (
+  id text primary key,
+  root_id text not null,
+  title text not null,
+  category text not null default &#39;General&#39;,
+  date date not null,
+  status text not null check (status in (&#39;pendiente&#39;,&#39;finalizada&#39;,&#39;pospuesta&#39;)),
+  chain integer not null default 0,
+  completed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+alter table tasks enable row level security;
+create policy &#34;acceso con anon key&#34; on tasks for all using (true) with check (true);
+</code></pre>
+<p>(La política de arriba es deliberadamente abierta para empezar rápido entre tus propios dispositivos; si más adelante añades varios usuarios, hay que endurecerla con Auth.)</p>
+<h3>2.3 Cómo llegan los dispositivos hasta la Zimaboard — el punto crítico</h3>
+<p>Tailscale crea una red <strong>privada</strong>: solo los dispositivos que tengan la app Tailscale instalada y con sesión iniciada en tu misma red (tailnet) pueden alcanzar la Zimaboard. Esto cambia según desde dónde uses la app:</p>
+<ul>
+<li><strong>Si instalas Tailscale también en el móvil y el portátil</strong>: perfecto, usan la URL Tailscale de la Zimaboard directamente, tráfico cifrado de punto a punto, nadie más lo ve.</li>
+<li><strong>Si quieres que la web en GitHub Pages (que la visita cualquier navegador normal, sin Tailscale) llegue a Supabase</strong>: necesitas <strong>Tailscale Funnel</strong>, que expone un servicio de tu tailnet como una URL HTTPS pública (<code>https://zimaboard.tu-tailnet.ts.net</code>), sin depender de que el dispositivo tenga Tailscale instalado. Se activa con <code>tailscale funnel 8000 on</code> (ajusta el puerto al que use la API de Supabase, normalmente el <code>8000</code> o <code>54321</code> según la config).</li>
+</ul>
+<p>Para tu caso (web en GitHub Pages + PWA instalada en el móvil), lo más simple es activar <strong>Funnel</strong> sobre el puerto de la API de Supabase: así cualquier dispositivo con la URL pública llega a tus datos, sin instalar nada extra.</p>
+<h3>2.4 Conectar la app a Supabase en vez de <code>localStorage</code></h3>
+<p>En el HTML, sustituye las funciones <code>load()</code> y <code>save()</code> por llamadas a la API REST de Supabase (usando <code>fetch</code>, sin necesidad de librerías):</p>
+<pre><code class="language-js">const SUPABASE_URL = &#39;https://zimaboard.tu-tailnet.ts.net&#39;; // o tu URL de Funnel
+const SUPABASE_ANON_KEY = &#39;tu-anon-key-del-.env&#39;;
+
+async function load() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/tasks?select=*`, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+  });
+  tasks = await res.json();
+}
+
+async function saveTask(task) {
+  await fetch(`${SUPABASE_URL}/rest/v1/tasks`, {
+    method: &#39;POST&#39;,
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      &#39;Content-Type&#39;: &#39;application/json&#39;,
+      Prefer: &#39;resolution=merge-duplicates&#39;
+    },
+    body: JSON.stringify(task)
+  });
+}
+</code></pre>
+<p>La idea general: cada vez que el código actual llama a <code>save()</code> (al añadir, completar, posponer, editar o borrar una tarea), en vez de escribir todo el array en <code>localStorage</code>, llamas a <code>saveTask()</code> solo con la tarea que cambió (o a un <code>DELETE</code> para eliminar). Y <code>load()</code> deja de leer <code>localStorage</code> para pedir los datos a Supabase al abrir la app.</p>
+<h3>2.5 &quot;Siempre actualizado&quot; entre dispositivos</h3>
+<p>Con eso ya tienes un dato compartido: abres desde el móvil o el portátil y ambos leen/escriben la misma tabla. Si además quieres que, con la app abierta en dos sitios a la vez, los cambios aparezcan solos sin recargar, Supabase Realtime permite suscribirte a cambios de la tabla (<code>supabase-js</code>, con <code>.channel('tasks').on('postgres_changes', ...)</code>) — esto ya es un paso más avanzado, y tiene sentido añadirlo una vez lo básico (leer/escribir contra Supabase) esté funcionando y probado.</p>
+<h3>2.6 Orden recomendado para no romper nada</h3>
+<ol>
+<li>Levanta Supabase y crea la tabla (2.1–2.2) sin tocar la app todavía.</li>
+<li>Activa Funnel y prueba la API con una petición de prueba (por ejemplo desde el navegador o <code>curl</code>) antes de tocar el HTML.</li>
+<li>Cambia <code>load()</code>/<code>save()</code> en una copia del HTML, pruébalo en local.</li>
+<li>Cuando funcione, sube esa versión al repositorio de GitHub — se actualiza sola tanto la web como la PWA instalada (gracias al service worker, que la refresca en segundo plano).</li>
+</ol>
+
+</body></html>
