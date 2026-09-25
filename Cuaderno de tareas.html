@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuaderno de tareas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F2E9;
+    --paper-raised: #FFFFFF;
+    --ink: #26221C;
+    --ink-soft: #6B6355;
+    --line: #DED4C0;
+    --accent: #6B4A2B;
+    --accent-soft: #EFE3D0;
+    --pend: #3B5BA5;
+    --pend-bg: #E7ECF6;
+    --done: #4B7A51;
+    --done-bg: #E7EFE6;
+    --post: #8B5E3C;
+    --post-bg: #F3E7DA;
+    --danger: #A3453A;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1C1A16;
+      --paper-raised: #262319;
+      --ink: #ECE6D9;
+      --ink-soft: #A69B87;
+      --line: #3A362B;
+      --accent: #D8B98C;
+      --accent-soft: #332B1E;
+      --pend: #8FB0EA;
+      --pend-bg: #22283A;
+      --done: #92C89B;
+      --done-bg: #1F2E20;
+      --post: #E0B48A;
+      --post-bg: #332619;
+      --danger: #E08B7D;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1C1A16;
+    --paper-raised: #262319;
+    --ink: #ECE6D9;
+    --ink-soft: #A69B87;
+    --line: #3A362B;
+    --accent: #D8B98C;
+    --accent-soft: #332B1E;
+    --pend: #8FB0EA;
+    --pend-bg: #22283A;
+    --done: #92C89B;
+    --done-bg: #1F2E20;
+    --post: #E0B48A;
+    --post-bg: #332619;
+    --danger: #E08B7D;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    padding: 2rem 1.5rem 1rem;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.6rem, 4vw, 2.1rem);
+    margin: 0 0 0.2rem;
+    letter-spacing: -0.01em;
+  }
+  header p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+  }
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem;
+  }
+  .composer {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.1rem 1.2rem;
+    margin: 1.2rem 0 1.6rem;
+  }
+  .composer-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .composer input[type="text"] {
+    flex: 1 1 240px;
+    min-width: 0;
+    font: inherit;
+    font-size: 1rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .composer input[list] {
+    flex: 0 1 180px;
+  }
+  .composer input:focus, .composer select:focus, button:focus, .task input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .composer button {
+    flex: 0 0 auto;
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 7px;
+    border: none;
+    background: var(--accent);
+    color: var(--paper);
+    cursor: pointer;
+  }
+  .composer button:hover { opacity: 0.9; }
+
+  .filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.4rem;
+  }
+  .chip {
+    font-size: 0.82rem;
+    padding: 0.32rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .chip[data-active="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--ink);
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+    align-items: start;
+  }
+  @media (max-width: 760px) {
+    .board { grid-template-columns: 1fr; }
+  }
+  .column-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--line);
+  }
+  .column-head h2 {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+  }
+  .column-head .count {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+  .col-pend .column-head { border-color: var(--pend); }
+  .col-done .column-head { border-color: var(--done); }
+  .col-post .column-head { border-color: var(--post); }
+
+  .tasks { display: flex; flex-direction: column; gap: 0.55rem; min-height: 40px; }
+  .empty {
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    padding: 0.9rem 0.2rem;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .task {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem;
+  }
+  .task-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .task-title {
+    flex: 1;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .col-done .task-title { text-decoration: line-through; color: var(--ink-soft); }
+  .cat-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    flex: none;
+    position: relative;
+    top: -1px;
+  }
+  .cat-label {
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin-top: 0.15rem;
+  }
+  .task-actions {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.55rem;
+    flex-wrap: wrap;
+  }
+  .task-actions button {
+    font: inherit;
+    font-size: 0.75rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .task-actions button:hover { background: var(--accent-soft); }
+  .task-actions .del { color: var(--danger); border-color: transparent; margin-left: auto; }
+
+  footer {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.5rem 2rem;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Cuaderno de tareas</h1>
+  <p>Anota lo de hoy, marca lo que termines y aplaza lo que no llegue.</p>
+</header>
+<main>
+  <div class="composer">
+    <div class="composer-row">
+      <input type="text" id="titleInput" placeholder="¿Qué tienes que hacer?" maxlength="140">
+      <input type="text" id="catInput" list="catOptions" placeholder="Categoría" maxlength="30">
+      <datalist id="catOptions"></datalist>
+      <button id="addBtn">Añadir</button>
+    </div>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="board">
+    <section class="col-pend">
+      <div class="column-head"><h2>Pendientes</h2><span class="count" id="countPend">0</span></div>
+      <div class="tasks" id="listPend"></div>
+    </section>
+    <section class="col-done">
+      <div class="column-head"><h2>Finalizadas</h2><span class="count" id="countDone">0</span></div>
+      <div class="tasks" id="listDone"></div>
+    </section>
+    <section class="col-post">
+      <div class="column-head"><h2>Pospuestas</h2><span class="count" id="countPost">0</span></div>
+      <div class="tasks" id="listPost"></div>
+    </section>
+  </div>
+</main>
+<footer>Las tareas se guardan en este dispositivo y navegador.</footer>
+
+<script>
+(function () {
+  var STORAGE_KEY = 'cuaderno-tareas-v1';
+  var tasks = [];
+  var activeFilter = 'todas';
+  var palette = ['#3B5BA5', '#6B4A2B', '#4B7A51', '#8B5E3C', '#7A4B84', '#3B8A8C', '#A3453A', '#5B6B3B'];
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      tasks = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      tasks = [];
+    }
+  }
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+    catch (e) { /* almacenamiento no disponible */ }
+  }
+  function colorFor(cat) {
+    var key = (cat || 'General').toLowerCase();
+    var hash = 0;
+    for (var i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    return palette[hash % palette.length];
+  }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function allCategories() {
+    var set = {};
+    tasks.forEach(function (t) { set[t.category || 'General'] = true; });
+    return Object.keys(set).sort();
+  }
+
+  function renderFilters() {
+    var cats = allCategories();
+    var el = document.getElementById('filters');
+    el.innerHTML = '';
+    var opts = ['todas'].concat(cats);
+    opts.forEach(function (c) {
+      var chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.type = 'button';
+      chip.textContent = c === 'todas' ? 'Todas' : c;
+      chip.setAttribute('data-active', String(c === activeFilter));
+      chip.addEventListener('click', function () { activeFilter = c; render(); });
+      el.appendChild(chip);
+    });
+  }
+
+  function renderDatalist() {
+    var dl = document.getElementById('catOptions');
+    dl.innerHTML = '';
+    allCategories().forEach(function (c) {
+      var o = document.createElement('option');
+      o.value = c;
+      dl.appendChild(o);
+    });
+  }
+
+  function taskCard(t) {
+    var card = document.createElement('div');
+    card.className = 'task';
+
+    var top = document.createElement('div');
+    top.className = 'task-top';
+
+    var titleWrap = document.createElement('div');
+    titleWrap.className = 'task-title';
+    var dot = document.createElement('span');
+    dot.className = 'cat-dot';
+    dot.style.background = colorFor(t.category);
+    titleWrap.appendChild(dot);
+    titleWrap.appendChild(document.createTextNode(t.title));
+    var catLabel = document.createElement('div');
+    catLabel.className = 'cat-label';
+    catLabel.textContent = t.category || 'General';
+    var titleCol = document.createElement('div');
+    titleCol.style.flex = '1';
+    titleCol.appendChild(titleWrap);
+    titleCol.appendChild(catLabel);
+
+    top.appendChild(titleCol);
+    card.appendChild(top);
+
+    var actions = document.createElement('div');
+    actions.className = 'task-actions';
+
+    function actionBtn(label, fn) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.addEventListener('click', fn);
+      return b;
+    }
+
+    if (t.status !== 'pendiente') {
+      actions.appendChild(actionBtn('Volver a pendiente', function () { setStatus(t.id, 'pendiente'); }));
+    }
+    if (t.status !== 'finalizada') {
+      actions.appendChild(actionBtn('Finalizar', function () { setStatus(t.id, 'finalizada'); }));
+    }
+    if (t.status !== 'pospuesta') {
+      actions.appendChild(actionBtn('Posponer', function () { setStatus(t.id, 'pospuesta'); }));
+    }
+    var del = actionBtn('Eliminar', function () { removeTask(t.id); });
+    del.className = 'del';
+    actions.appendChild(del);
+
+    card.appendChild(actions);
+    return card;
+  }
+
+  function setStatus(id, status) {
+    var t = tasks.find(function (x) { return x.id === id; });
+    if (t) { t.status = status; save(); render(); }
+  }
+  function removeTask(id) {
+    tasks = tasks.filter(function (x) { return x.id !== id; });
+    save(); render();
+  }
+
+  function render() {
+    renderFilters();
+    renderDatalist();
+    var visible = activeFilter === 'todas' ? tasks : tasks.filter(function (t) { return (t.category || 'General') === activeFilter; });
+
+    var groups = { pendiente: [], finalizada: [], pospuesta: [] };
+    visible.forEach(function (t) { groups[t.status].push(t); });
+
+    fillColumn('listPend', 'countPend', groups.pendiente, 'Nada pendiente por aquí.');
+    fillColumn('listDone', 'countDone', groups.finalizada, 'Aún no has finalizado nada.');
+    fillColumn('listPost', 'countPost', groups.pospuesta, 'No has pospuesto tareas.');
+  }
+
+  function fillColumn(listId, countId, items, emptyText) {
+    var list = document.getElementById(listId);
+    document.getElementById(countId).textContent = items.length;
+    list.innerHTML = '';
+    if (!items.length) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.textContent = emptyText;
+      list.appendChild(e);
+      return;
+    }
+    items.slice().reverse().forEach(function (t) { list.appendChild(taskCard(t)); });
+  }
+
+  function addTask() {
+    var titleInput = document.getElementById('titleInput');
+    var catInput = document.getElementById('catInput');
+    var title = titleInput.value.trim();
+    if (!title) { titleInput.focus(); return; }
+    var category = catInput.value.trim() || 'General';
+    tasks.push({ id: uid(), title: title, category: category, status: 'pendiente', createdAt: Date.now() });
+    save();
+    titleInput.value = '';
+    catInput.value = '';
+    titleInput.focus();
+    render();
+  }
+
+  document.getElementById('addBtn').addEventListener('click', addTask);
+  document.getElementById('titleInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') addTask();
+  });
+  document.getElementById('catInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') addTask();
+  });
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
