@@ -48,9 +48,20 @@
   h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 600; font-size: clamp(1.5rem, 4vw, 2rem); margin: 0 0 0.2rem; letter-spacing: -0.01em; }
   header p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
 
-  nav.tabs { display: flex; gap: 0.4rem; max-width: 1120px; margin: 1rem auto 0; padding: 0 1.5rem; }
+  nav.tabs { display: flex; gap: 0.4rem; align-items: center; max-width: 1120px; margin: 1rem auto 0; padding: 0 1.5rem; }
   .tab-btn { font: inherit; font-weight: 600; font-size: 0.88rem; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; border: 1px solid var(--line); border-bottom: none; background: var(--paper); color: var(--ink-soft); cursor: pointer; }
   .tab-btn[data-active="true"] { background: var(--paper-raised); color: var(--ink); }
+  .export-toggle { margin-left: auto; font: inherit; font-size: 0.85rem; padding: 0.5rem 0.9rem; border-radius: 8px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); cursor: pointer; }
+
+  .export-panel { max-width: 1120px; margin: 0.7rem auto 0; padding: 0 1.5rem; display: none; }
+  .export-panel[data-open="true"] { display: block; }
+  .export-inner { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.1rem; }
+  .export-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+  .export-row label { font-size: 0.8rem; color: var(--ink-soft); display: flex; flex-direction: column; gap: 0.2rem; }
+  .export-row input[type="date"], .export-row select { font: inherit; font-size: 0.85rem; padding: 0.4rem 0.5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); }
+  .export-row button { font: inherit; font-size: 0.82rem; padding: 0.45rem 0.8rem; border-radius: 7px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .export-row button#expDownload { background: var(--accent); color: var(--paper); border: none; font-weight: 600; }
+  .export-hint { font-size: 0.76rem; color: var(--ink-soft); margin-top: 0.6rem; }
 
   main { max-width: 1120px; margin: 0 auto; padding: 1.1rem 1.5rem 3rem; border-top: 1px solid var(--line); }
   .view { display: none; }
@@ -153,7 +164,28 @@
   <button class="tab-btn" data-view="day">Día</button>
   <button class="tab-btn" data-view="calendar">Calendario</button>
   <button class="tab-btn" data-view="stats">Estadísticas</button>
+  <button class="export-toggle" id="exportToggle" type="button">Exportar datos</button>
 </nav>
+
+<div class="export-panel" id="exportPanel" data-open="false">
+  <div class="export-inner">
+    <div class="export-row">
+      <label>Desde <input type="date" id="expFrom"></label>
+      <label>Hasta <input type="date" id="expTo"></label>
+      <label>Formato
+        <select id="expFormat">
+          <option value="json">JSON (para importar a una base de datos)</option>
+          <option value="csv">CSV</option>
+        </select>
+      </label>
+      <button type="button" id="expQuickMonth">Este mes</button>
+      <button type="button" id="expQuickYear">Este año</button>
+      <button type="button" id="expQuickAll">Todo el histórico</button>
+      <button type="button" id="expDownload">Descargar</button>
+    </div>
+    <div class="export-hint">Sin fechas seleccionadas se exporta todo el histórico. Cada tarea incluye su id, categoría, fecha, estado, veces pospuesta y fecha de finalización.</div>
+  </div>
+</div>
 
 <main>
   <section class="view" id="view-day">
@@ -605,6 +637,94 @@
   }
   function countDoneOn(d) {
     return tasks.filter(function (t) { return t.status === 'finalizada' && t.completedAt && dateToStr(new Date(t.completedAt)) === d; }).length;
+  }
+
+  // ---------- Exportar ----------
+  var downloadsNS;
+  async function getDownloads() {
+    if (downloadsNS !== undefined) return downloadsNS;
+    try {
+      if (typeof claude === 'undefined' || !claude.use) { downloadsNS = null; return null; }
+      downloadsNS = await claude.use('downloads');
+    } catch (e) { downloadsNS = null; }
+    return downloadsNS;
+  }
+
+  document.getElementById('exportToggle').addEventListener('click', function () {
+    var panel = document.getElementById('exportPanel');
+    var open = panel.getAttribute('data-open') === 'true';
+    panel.setAttribute('data-open', String(!open));
+  });
+  document.getElementById('expQuickMonth').addEventListener('click', function () {
+    var t = strToDate(todayStr());
+    document.getElementById('expFrom').value = dateToStr(new Date(t.getFullYear(), t.getMonth(), 1));
+    document.getElementById('expTo').value = dateToStr(new Date(t.getFullYear(), t.getMonth() + 1, 0));
+  });
+  document.getElementById('expQuickYear').addEventListener('click', function () {
+    var t = strToDate(todayStr());
+    document.getElementById('expFrom').value = t.getFullYear() + '-01-01';
+    document.getElementById('expTo').value = t.getFullYear() + '-12-31';
+  });
+  document.getElementById('expQuickAll').addEventListener('click', function () {
+    document.getElementById('expFrom').value = '';
+    document.getElementById('expTo').value = '';
+  });
+  document.getElementById('expDownload').addEventListener('click', exportData);
+
+  function csvEscape(v) {
+    var s = String(v == null ? '' : v);
+    if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  async function exportData() {
+    var from = document.getElementById('expFrom').value;
+    var to = document.getElementById('expTo').value;
+    var format = document.getElementById('expFormat').value;
+    var rows = tasks.filter(function (t) {
+      if (from && t.date < from) return false;
+      if (to && t.date > to) return false;
+      return true;
+    }).slice().sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+
+    var filename, data;
+    if (format === 'csv') {
+      var header = ['id', 'rootId', 'title', 'category', 'date', 'status', 'chain', 'completedAt', 'createdAt'];
+      var lines = [header.join(',')];
+      rows.forEach(function (t) {
+        lines.push([t.id, t.rootId, t.title, t.category, t.date, t.status, t.chain,
+          t.completedAt ? new Date(t.completedAt).toISOString() : '',
+          t.createdAt ? new Date(t.createdAt).toISOString() : ''
+        ].map(csvEscape).join(','));
+      });
+      data = lines.join('\n');
+      filename = 'tareas-' + (from || 'inicio') + '_a_' + (to || 'hoy') + '.csv';
+    } else {
+      var exportRows = rows.map(function (t) {
+        return {
+          id: t.id, rootId: t.rootId, title: t.title, category: t.category,
+          date: t.date, status: t.status, timesPostponed: t.chain,
+          completedAt: t.completedAt ? new Date(t.completedAt).toISOString() : null,
+          createdAt: t.createdAt ? new Date(t.createdAt).toISOString() : null
+        };
+      });
+      data = JSON.stringify({ exportedAt: new Date().toISOString(), from: from || null, to: to || null, tasks: exportRows }, null, 2);
+      filename = 'tareas-' + (from || 'inicio') + '_a_' + (to || 'hoy') + '.json';
+    }
+
+    var hint = document.querySelector('.export-hint');
+    var dl = await getDownloads();
+    if (!dl) {
+      hint.textContent = 'La descarga no está disponible en esta vista. Prueba a abrir el enlace del artefacto en el navegador.';
+      return;
+    }
+    try {
+      await dl.save({ filename: filename, data: data });
+      hint.textContent = rows.length + ' tarea(s) exportadas correctamente.';
+    } catch (e) {
+      if (e && e.code === 'declined') { hint.textContent = 'Descarga cancelada.'; }
+      else { hint.textContent = 'No se ha podido generar la descarga.'; }
+    }
   }
 
   function renderAll() {
