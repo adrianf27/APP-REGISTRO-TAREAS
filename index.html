@@ -261,9 +261,19 @@
   </section>
 </main>
 <footer>Las tareas y estadísticas se guardan en este dispositivo y navegador.</footer>
-
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function () {
+   var SUPABASE_URL = 'https://vpmtdjkggsnbgaawclqj.supabase.co';
+  var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_hz7aam0LszscIC_Zzszcmg_FMyXs2Rq';
+
+  var supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  var STORAGE_KEY = 'cuaderno-tareas-v2';
   var STORAGE_KEY = 'cuaderno-tareas-v2';
   var tasks = [];
   var activeFilter = 'todas';
