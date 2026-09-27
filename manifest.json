@@ -2,7 +2,7 @@
   "name": "Cuaderno de tareas",
   "short_name": "Tareas",
   "description": "Registro diario de tareas con calendario y estadísticas",
-  "start_url": "./registro-tareas.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
